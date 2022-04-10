@@ -7,7 +7,7 @@ from tkinter.messagebox import showinfo
 from turtle import bgcolor
 from typing import Callable
 
-from key_gens import generate_rsa_keys, send_rsa_key
+from ..encryption.key_gens import generate_rsa_keys, send_rsa_key
 
 class Gui(tk.Tk):
     def __init__(self, title: str):
@@ -76,8 +76,3 @@ class Gui(tk.Tk):
             title='Selected File',
             message=filename
         )
-
-
-if __name__ == "__main__":
-    app = Gui("xd")
-    app.mainloop()
