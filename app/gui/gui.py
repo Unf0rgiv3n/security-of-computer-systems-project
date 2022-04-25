@@ -34,7 +34,7 @@ class Gui(tk.Tk):
 
         self._combobox = self._create_combobox(row=0,column=1, rowspan=1, columnspan=2)
         self._listener_port_entry_box = self._create_entry_box(row=2, column=1, rowspan=1, columnspan=1)
-        self._listen_to_port_btn = self._create_button(row=2, column=2, text='Listen on port', command=partial(handle_set_port, self._listener_port_entry_box))
+        self._listen_to_port_btn = self._create_button(row=2, column=2, text='Listen on port', command=partial(handle_set_port, self._listener_port_entry_box, self._msg_received_text_box))
 
         
 
