@@ -1,0 +1,4 @@
+HEADER=64
+SERVER="localhost"
+FORMAT="utf-8"
+DISCONNECT_MESSAGE="!dc"

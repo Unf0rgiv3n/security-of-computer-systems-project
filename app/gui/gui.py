@@ -1,15 +1,14 @@
-from ast import Call
-from logging import root
-from pydoc import text
 import tkinter as tk
-from tkinter import Place, ttk
+from tkinter import ttk
 from tkinter import filedialog as fd
 from tkinter.messagebox import showinfo
 from turtle import bgcolor
 from typing import Callable
+from functools import partial
 import os
 
 from ..encryption.key_gens import generate_rsa_keys, send_rsa_key
+from .gui_networking_handlers import *
 
 class Gui(tk.Tk):
     def __init__(self, title: str):
@@ -28,15 +27,16 @@ class Gui(tk.Tk):
 
         self._select_file_btn = self._create_button(row=1,column=1, columnspan=2, text='Select file', command=self._select_file)
 
-        self._text_box = self._create_text_box(row=2, column=0, rowspan=3, columnspan=1)
-        self._send_text_box_btn = self._create_button(row=5,column=0, text='Send text', command=None)
+        self._msg_received_text_box = self._create_text_box(row=2, column=0, rowspan=2, columnspan=1, bg = "black", fg = "white")
+        self._msg_send_entry_box = self._create_entry_box(row=4, column=0, rowspan=1, columnspan=1)
+        self._sending_port_entry_box = self._create_entry_box(row=3, column=1)
+        self._send_text_box_btn = self._create_button(row=5,column=0, text='Send text', command=partial(handle_connect_port, self._sending_port_entry_box, self._msg_send_entry_box))
 
         self._combobox = self._create_combobox(row=0,column=1, rowspan=1, columnspan=2)
-        self._listener_port_text_box = self._create_text_box(row=2, column=1, rowspan=1, columnspan=1)
-        self._listen_to_port_btn = self._create_button(row=2, column=2, text='Listen on port', command=None)
+        self._listener_port_entry_box = self._create_entry_box(row=2, column=1, rowspan=1, columnspan=1)
+        self._listen_to_port_btn = self._create_button(row=2, column=2, text='Listen on port', command=partial(handle_set_port, self._listener_port_entry_box))
 
-        self._sending_port_text_box = self._create_text_box(row=3, column=1)
-        self._send_port_text_box = self._create_button(row=3, column=2, text='Send port confirmation', command=None)
+        
 
     def _create_grid(self, row_num: int, col_num: int):
         for i in range(row_num):
@@ -50,8 +50,13 @@ class Gui(tk.Tk):
         button.grid(row=row,column=column, rowspan=rowspan, columnspan=columnspan, sticky='nsew')
         return button
     
-    def _create_text_box(self, row: int, column: int, rowspan: int = 1, columnspan: int = 1) -> tk.Entry:
-        text_box = tk.Entry(self)
+    def _create_entry_box(self, row: int, column: int, rowspan: int = 1, columnspan: int = 1, bg: str = "white", fg: str = "black") -> tk.Entry:
+        entry_box = tk.Entry(self, bg=bg, fg=fg)
+        entry_box.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan, sticky='nsew')
+        return entry_box
+
+    def _create_text_box(self, row: int, column: int, rowspan: int = 1, columnspan: int = 1, bg: str = "white", fg: str = "black") -> tk.Text:
+        text_box = tk.Text(self, bg=bg, fg=fg, height=10, width=25)
         text_box.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan, sticky='nsew')
         return text_box
         
