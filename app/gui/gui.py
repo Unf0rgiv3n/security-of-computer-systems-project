@@ -22,9 +22,6 @@ class Gui(tk.Tk):
 
         self._create_grid(row_num=5, col_num=2)
 
-        self._gen_rsa_btn = self._create_button(row=0,column=0, text='Generate RSA keys', command=generate_rsa_keys)
-        self._send_rsa_btn = self._create_button(row=1,column=0, text='Send RSA key', command=send_rsa_key)
-
         self._select_file_btn = self._create_button(row=1,column=1, columnspan=2, text='Select file', command=self._select_file)
 
         self._msg_received_text_box = self._create_text_box(row=2, column=0, rowspan=2, columnspan=1, bg = "black", fg = "white")
@@ -36,7 +33,8 @@ class Gui(tk.Tk):
         self._listener_port_entry_box = self._create_entry_box(row=2, column=1, rowspan=1, columnspan=1)
         self._listen_to_port_btn = self._create_button(row=2, column=2, text='Listen on port', command=partial(handle_set_port, self._listener_port_entry_box, self._msg_received_text_box))
 
-        
+        self._gen_rsa_btn = self._create_button(row=0,column=0, text='Generate RSA keys', command=generate_rsa_keys)
+        self._send_rsa_btn = self._create_button(row=1,column=0, text='Send RSA key', command=partial(send_rsa_key,self._sending_port_entry_box))
 
     def _create_grid(self, row_num: int, col_num: int):
         for i in range(row_num):
