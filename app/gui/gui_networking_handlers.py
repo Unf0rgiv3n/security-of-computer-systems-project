@@ -1,20 +1,50 @@
 from ..networking import client, server
 import threading
 
-def handle_set_port(input_box, text_box):
-    #start_server(text_box.get())
-    port = input_box.get()
-    gui_server = server.Server()
-    #gui_server.server_events.subscribe("receive_msg", handle_receive_msg)
-    thread = threading.Thread(target=gui_server.start_server, args=(port,), daemon=True)
-    thread.start()
+class NetworkingHandler:
+    
+    _gui_server = None
+    _gui_client = None
 
-def handle_connect_port(text_box_port, text_box_msg):
-    port = text_box_port.get()
-    msg = text_box_msg.get()
-    gui_client = client.Client()
-    thread = threading.Thread(target=gui_client.send_message, args=(port, msg,))
-    thread.start()
+    @classmethod
+    def handle_set_port(self, input_box, text_box):
+        port = input_box.get()
+        self._gui_server = server.Server()
+        #gui_server.server_events.subscribe("receive_msg", handle_receive_msg)
+        thread = threading.Thread(target=self._gui_server.start_server, args=(port,), daemon=True)
+        thread.start()
 
-def handle_receive_msg(msg):
-    pass
+    @classmethod
+    def handle_connect_to_port(self, input_box):
+        port = input_box.get()
+        self._gui_client = client.Client()
+        thread = threading.Thread(target=self._gui_client.start_client, args=(port,), daemon=True)
+        thread.start()
+
+    @classmethod
+    def handle_stop_server(self):
+        if self._gui_server and self._gui_server.socket:
+            self._gui_server.stop_server()
+            self._gui_server = None
+        else:
+            print("[WARNING] Server is not listening")
+
+    @classmethod
+    def handle_stop_client(self):
+        if self._gui_client and self._gui_client.socket:
+            self._gui_client.stop_client()
+            self._gui_client = None
+        else:
+            print("[WARNING] Client is not connected")
+
+    @classmethod
+    def handle_send_message(self, text_box_msg):
+        if self._gui_client:
+            msg = text_box_msg.get()
+            self._gui_client.send_message(msg)
+        else: 
+            print("[WARNING] Client not connected")
+
+    @classmethod
+    def handle_receive_msg(self, msg):
+        pass
