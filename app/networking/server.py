@@ -6,12 +6,13 @@ import threading
 from .networking_consts import *
 from ..event import Event
 from ..encryption import key_gens
+from ..networking.client import Client
 
 class Server:
     server_events = Event()
     session_key = ""
     guest_pub_key = ""
-    method_partial_key="empty"
+    client = Client()
 
     def __init__(self) -> None:
         self.socket = None
@@ -26,24 +27,28 @@ class Server:
             if msg_length:
                 msg_length = int(msg_length)
                 msg = conn.recv(msg_length).decode(FORMAT)
+                if self.guest_pub_key.__eq__(""):
+                    self.guest_pub_key=msg
+                    if key_gens.should_generate_session_key(msg):
+                        self.client.send_message(key_gens.get_encoded_AES(msg))
+                        self.session_key=key_gens.get_AES()
+                        print("klucz sesyjny to "+self.session_key+" koniec")
+                    else:
+                        msg_length = int(msg_length)
+                        msg = conn.recv(msg_length).decode(FORMAT)
+                        self.session_key=key_gens.decode_AES(msg)
+                        print("klucz sesyjny to "+self.session_key+" koniec")
                 self.server_events.post_event("receive_msg", msg)
                 print(msg)
 
-    def get_pub_key(self, conn, addr):
-        print(f"[INFO] Client {addr} connected")
-        msg_length = conn.recv(HEADER).decode(FORMAT)
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = conn.recv(msg_length).decode(FORMAT)
-            self.server_events.post_event("receive_msg", msg)
-            return msg
 
-    def start_server(self, port: str):
+    def start_server(self, port: str, client: Client):
         print("[INFO] Starting server")
         self.port = int(port)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((SERVER, self.port))
         self.socket.listen()
+        self.client = client
         print(f"[INFO] Server is listening on port {self.port}")
         self.listening = True
         while self.listening:

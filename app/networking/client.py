@@ -1,6 +1,7 @@
 import socket
 from .networking_consts import *
 from ..event import Event
+from ..encryption import key_gens
 
 class Client:
     client_events = Event()
@@ -25,6 +26,8 @@ class Client:
         client.connect((SERVER, self.port))
         print(f"[INFO] Client connected to {SERVER}:{self.port}")
         self.socket = client
+        self.send_message(key_gens.get_public_key())
+
 
     def stop_client(self):
         print(f"[INFO] Shutting down client connected to: {self.port}")
