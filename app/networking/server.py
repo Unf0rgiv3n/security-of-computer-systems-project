@@ -22,7 +22,6 @@ class Server:
     
     def handle_client(self, conn, addr):
         print(f"[INFO] Client {addr} connected")
-        
         while self.listening:
             msg_length = conn.recv(HEADER).decode(FORMAT)
             if msg_length:
@@ -30,27 +29,26 @@ class Server:
                 msg = conn.recv(msg_length).decode(FORMAT)
                 if self.guest_pub_key.__eq__(""):
                     self.guest_pub_key=msg
-                    if key_gens.should_generate_session_key(msg):
-                        while not self.client.is_connected():
-                            print("waiting for connection")
-                            time.sleep(3)
-                        self.client.send_message_bytes(key_gens.get_encoded_AES(msg))
-                        self.session_key=key_gens.get_AES()
-                        print("klucz sesyjny to ")
-                        print(self.session_key)
-                        print ("end")
-                    else:
-                        msg_length = conn.recv(HEADER).decode(FORMAT)
-                        msg_length = int(msg_length)
-                        msg = conn.recv(msg_length)
-                        self.session_key=key_gens.decode_AES(msg)
-                        print("klucz sesyjny to ")
-                        print(self.session_key)
-                        print ("end")
+                    self.exchange_session_key(conn,addr)
                 else:
                     self.server_events.post_event("receive_msg", msg)
                     print(msg)
 
+    def exchange_session_key(self,conn,addr):
+        if key_gens.should_generate_session_key(self.guest_pub_key):
+            while not self.client.is_connected():
+                time.sleep(3)
+            self.client.send_message_bytes(key_gens.get_encoded_AES(self.guest_pub_key))
+            self.session_key=key_gens.get_AES()
+            self.client.set_session_key(self.session_key)
+            print(f"[INFO] Uzgodniony klucz sesyjny {self.session_key}")
+        else:
+            msg_length = conn.recv(HEADER).decode(FORMAT)
+            msg_length = int(msg_length)
+            msg = conn.recv(msg_length)
+            self.session_key=key_gens.decode_AES(msg)
+            self.client.set_session_key(self.session_key)
+            print(f"[INFO] Uzgodniony klucz sesyjny {self.session_key}")
 
     def start_server(self, port: str, client: Client):
         print("[INFO] Starting server")

@@ -1,5 +1,6 @@
 from ast import Bytes
 import socket
+from xmlrpc.client import boolean
 from .networking_consts import *
 from ..event import Event
 from ..encryption import key_gens
@@ -11,6 +12,7 @@ class Client:
         self.socket = None
         self.port = None
         self.connected = False
+        self.session_key = ""
 
     def send_message(self, msg: str):
         message = msg.encode(FORMAT)
@@ -40,13 +42,14 @@ class Client:
         self.connected = True
         self.send_message(key_gens.get_public_key())
         
-
-
     def stop_client(self):
         print(f"[INFO] Shutting down client connected to: {self.port}")
         self.socket.close()
         self.socket = None
         self.port = None
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         return self.connected
+
+    def set_session_key(self,session_key):
+        self.session_key = session_key

@@ -1,3 +1,4 @@
+from ast import Bytes
 from base64 import b64decode, b64encode
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Cipher import AES, PKCS1_OAEP
@@ -20,37 +21,35 @@ def generate_keys():
     with open("./pub_key.pem", "wb") as file:
         file.write(pub_key)
     
-    with open("./aes_key.msgtxt", "wb") as file:
+    with open("./aes_key.txt", "wb") as file:
         file.write(aes_key)
     
 
-def get_public_key():
+def get_public_key() -> str:
     with open("./pub_key.pem", "r") as file:
         pub_key = file.read()
         return pub_key
 
-def get_encoded_AES(msg):
+def get_encoded_AES(msg) -> bytes:
     with open("./aes_key.txt", "rb") as file:
         aes = file.read()
         cipher_rsa = PKCS1_OAEP.new(RSA.import_key(msg))
         enc_session_key = cipher_rsa.encrypt(aes)
         return enc_session_key
 
-def decode_AES(aes):
+def decode_AES(aes) -> bytes:
     with open("./prv_key.pem", "r") as file:
         prv_key=file.read()
         cipher_rsa = PKCS1_OAEP.new(RSA.import_key(prv_key))
         enc_session_key = cipher_rsa.decrypt(aes)
         return enc_session_key
 
-def get_AES():
+def get_AES() -> bytes:
     with open("./aes_key.txt", "rb") as file:
         aes = file.read()
         return aes
 
-
-
-def should_generate_session_key(guest_pub_key):
+def should_generate_session_key(guest_pub_key) -> bool:
     with open("./pub_key.pem", "r") as file:
         pub_key=file.read()
         my_hash = int.from_bytes(hashlib.sha256(pub_key.encode('utf-8')).digest(), 'big')
