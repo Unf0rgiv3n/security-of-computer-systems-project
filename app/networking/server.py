@@ -11,7 +11,7 @@ import time
 
 class Server:
     server_events = Event()
-    session_key = ""
+    session_key = None
     guest_pub_key = ""
     client = Client()
 
@@ -26,7 +26,12 @@ class Server:
             msg_length = conn.recv(HEADER).decode(FORMAT)
             if msg_length:
                 msg_length = int(msg_length)
-                msg = conn.recv(msg_length).decode(FORMAT)
+                #msg = conn.recv(msg_length).decode(FORMAT)
+                msg = conn.recv(msg_length)
+                if self.session_key is not None:
+                    msg = key_gens.decrypt_with_AES(msg,self.session_key).decode(FORMAT)
+                else:
+                    msg = msg.decode(FORMAT)
                 if self.guest_pub_key.__eq__(""):
                     self.guest_pub_key=msg
                     self.exchange_session_key(conn,addr)

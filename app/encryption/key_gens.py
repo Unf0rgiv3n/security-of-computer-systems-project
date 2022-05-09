@@ -6,6 +6,7 @@ from ..networking import client
 import threading
 import hashlib
 import os 
+from Crypto.Util.Padding import pad, unpad
 
 
 def generate_keys():
@@ -58,6 +59,16 @@ def should_generate_session_key(guest_pub_key) -> bool:
             return True
         else:
             return False
+
+def encrypt_with_AES(msg,aes):
+    cipher = AES.new(aes, AES.MODE_ECB)
+    data=cipher.encrypt(pad(msg,16))
+    return data
+
+def decrypt_with_AES(msg,aes):
+    cipher = AES.new(aes, AES.MODE_ECB)
+    data=unpad(cipher.decrypt(msg),16)
+    return data
     
 
     

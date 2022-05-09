@@ -12,10 +12,12 @@ class Client:
         self.socket = None
         self.port = None
         self.connected = False
-        self.session_key = ""
+        self.session_key = None
 
     def send_message(self, msg: str):
         message = msg.encode(FORMAT)
+        if self.session_key is not None:
+            message = key_gens.encrypt_with_AES(message,self.session_key)
         msg_length = len(message)
         send_length = str(msg_length).encode(FORMAT)
         send_length  += b' ' * (HEADER - len(send_length))
