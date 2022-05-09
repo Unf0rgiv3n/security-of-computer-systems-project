@@ -34,7 +34,7 @@ def get_encoded_AES(msg):
         aes = file.read()
         cipher_rsa = PKCS1_OAEP.new(RSA.import_key(msg))
         enc_session_key = cipher_rsa.encrypt(aes)
-        return enc_session_key.decode("utf-8")
+        return enc_session_key
 
 def decode_AES(aes):
     with open("./prv_key.pem", "r") as file:
