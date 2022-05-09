@@ -6,19 +6,24 @@ import threading
 from .networking_consts import *
 from ..event import Event
 from ..encryption import key_gens
+from ..encryption.encryption import Encryption
 from ..networking.client import Client
 import time
 
+from app.encryption import encryption
+
 class Server:
     server_events = Event()
-    session_key = None
-    guest_pub_key = ""
-    client = Client()
+    guest_pub_key : str
+    client : Client
+    encryption_obj : Encryption
 
     def __init__(self) -> None:
         self.socket = None
         self.port = None
         self.listening = False
+        self.encryption_obj = None
+        self.client = None
     
     def handle_client(self, conn, addr):
         print(f"[INFO] Client {addr} connected")
@@ -26,13 +31,12 @@ class Server:
             msg_length = conn.recv(HEADER).decode(FORMAT)
             if msg_length:
                 msg_length = int(msg_length)
-                #msg = conn.recv(msg_length).decode(FORMAT)
                 msg = conn.recv(msg_length)
-                if self.session_key is not None:
-                    msg = key_gens.decrypt_with_AES(msg,self.session_key).decode(FORMAT)
+                if self.encryption_obj is not None:
+                    msg = self.encryption_obj.decrypt_with_AES(msg).decode(FORMAT)
                 else:
                     msg = msg.decode(FORMAT)
-                if self.guest_pub_key.__eq__(""):
+                if self.encryption_obj is None:
                     self.guest_pub_key=msg
                     self.exchange_session_key(conn,addr)
                 else:
@@ -43,16 +47,22 @@ class Server:
         if key_gens.should_generate_session_key(self.guest_pub_key):
             while not self.client.is_connected():
                 time.sleep(3)
-            self.client.send_message_bytes(key_gens.get_encoded_AES(self.guest_pub_key))
-            self.session_key=key_gens.get_AES()
-            self.client.set_session_key(self.session_key)
-            print(f"[INFO] Uzgodniony klucz sesyjny {self.session_key}")
+            self.encryption_obj = Encryption()
+            self.encryption_obj.set_RSA_cipher(self.guest_pub_key)
+            self.client.send_message_bytes(self.encryption_obj.encrypt_with_RSA(key_gens.get_AES()))
+            self.session_key = key_gens.get_AES()
+            self.encryption_obj.set_AES_cipher(self.session_key,self.encryption_obj.MODE_ECB)
+            self.client.set_encryption(self.encryption_obj)
+            print(f"[INFO] Uzgodniono klucz sesyjny {self.session_key}")
         else:
+            self.encryption_obj = Encryption()
+            self.encryption_obj.set_RSA_cipher(key_gens.get_private_key())
             msg_length = conn.recv(HEADER).decode(FORMAT)
             msg_length = int(msg_length)
             msg = conn.recv(msg_length)
-            self.session_key=key_gens.decode_AES(msg)
-            self.client.set_session_key(self.session_key)
+            self.session_key=self.encryption_obj.decrypt_with_RSA(msg)
+            self.encryption_obj.set_AES_cipher(self.session_key,self.encryption_obj.MODE_ECB)
+            self.client.set_encryption(self.encryption_obj)
             print(f"[INFO] Uzgodniony klucz sesyjny {self.session_key}")
 
     def start_server(self, port: str, client: Client):

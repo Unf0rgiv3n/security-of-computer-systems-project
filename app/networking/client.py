@@ -4,20 +4,25 @@ from xmlrpc.client import boolean
 from .networking_consts import *
 from ..event import Event
 from ..encryption import key_gens
+from ..encryption.encryption import Encryption
+from app import encryption
 
 class Client:
+    
     client_events = Event()
+    encryption_obj : Encryption
 
     def __init__(self) -> None:
         self.socket = None
         self.port = None
         self.connected = False
         self.session_key = None
+        self.encryption_obj = None
 
     def send_message(self, msg: str):
         message = msg.encode(FORMAT)
-        if self.session_key is not None:
-            message = key_gens.encrypt_with_AES(message,self.session_key)
+        if self.encryption_obj is not None:
+            message = self.encryption_obj.encrypt_with_AES(message)
         msg_length = len(message)
         send_length = str(msg_length).encode(FORMAT)
         send_length  += b' ' * (HEADER - len(send_length))
@@ -53,5 +58,5 @@ class Client:
     def is_connected(self) -> bool:
         return self.connected
 
-    def set_session_key(self,session_key):
-        self.session_key = session_key
+    def set_encryption(self,encryption):
+        self.encryption_obj = encryption
