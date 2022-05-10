@@ -1,0 +1,36 @@
+from Cryptodome.Cipher import AES, PKCS1_OAEP
+from Crypto.Util.Padding import pad, unpad
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Cipher import AES, PKCS1_OAEP
+
+
+class Encryption:
+
+    MODE_ECB = 1
+    MODE_CBC = 2
+
+    def __init__(self) -> None:
+        self.AES_cipher = None
+        self.RSA_cipher = None
+
+    def set_AES_cipher(self,key,method):
+        self.AES_cipher = AES.new(key, method)
+        
+    def set_RSA_cipher(self,RSA_key):
+        self.RSA_cipher = PKCS1_OAEP.new(RSA.import_key(RSA_key))
+
+    def encrypt_with_AES(self,msg) -> bytes:
+        data = self.AES_cipher.encrypt(pad(msg,16))
+        return data
+
+    def decrypt_with_AES(self,msg) -> bytes:
+        data = unpad(self.AES_cipher.decrypt(msg),16)
+        return data
+
+    def encrypt_with_RSA(self,msg) -> bytes:
+        data = self.RSA_cipher.encrypt(msg)
+        return data
+
+    def decrypt_with_RSA(self,msg) -> bytes:
+        data = self.RSA_cipher.decrypt(msg)
+        return data

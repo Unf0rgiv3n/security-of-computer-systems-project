@@ -10,14 +10,17 @@ class NetworkingHandler:
     def handle_set_port(self, input_box, text_box):
         port = input_box.get()
         self._gui_server = server.Server()
+        if self._gui_client is None:
+            self._gui_client = client.Client()
         #gui_server.server_events.subscribe("receive_msg", handle_receive_msg)
-        thread = threading.Thread(target=self._gui_server.start_server, args=(port,), daemon=True)
+        thread = threading.Thread(target=self._gui_server.start_server, args=(port,self._gui_client), daemon=True)
         thread.start()
 
     @classmethod
     def handle_connect_to_port(self, input_box):
         port = input_box.get()
-        self._gui_client = client.Client()
+        if self._gui_client is None:
+            self._gui_client = client.Client()
         thread = threading.Thread(target=self._gui_client.start_client, args=(port,), daemon=True)
         thread.start()
 
