@@ -53,7 +53,7 @@ class Server:
             self.session_key = key_gens.get_AES()
             self.encryption_obj.set_AES_cipher(self.session_key,self.encryption_obj.MODE_ECB)
             self.client.set_encryption(self.encryption_obj)
-            print(f"[INFO] Uzgodniono klucz sesyjny {self.session_key}")
+            print(f"[INFO] Session key agreed {self.session_key}")
         else:
             self.encryption_obj = Encryption()
             self.encryption_obj.set_RSA_cipher(key_gens.get_private_key())
@@ -63,7 +63,7 @@ class Server:
             self.session_key=self.encryption_obj.decrypt_with_RSA(msg)
             self.encryption_obj.set_AES_cipher(self.session_key,self.encryption_obj.MODE_ECB)
             self.client.set_encryption(self.encryption_obj)
-            print(f"[INFO] Uzgodniony klucz sesyjny {self.session_key}")
+            print(f"[INFO] Session key agreed {self.session_key}")
 
     def start_server(self, port: str, client: Client):
         print("[INFO] Starting server")
