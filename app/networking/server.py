@@ -14,6 +14,7 @@ import os
 from app.encryption import encryption
 
 class Server:
+    message_ack = "Message Delivered"
     server_events = Event()
     guest_pub_key : str
     client : Client
@@ -38,6 +39,8 @@ class Server:
                     msg = self.encryption_obj.decrypt_with_AES(msg).decode(FORMAT)
                     self.server_events.post_event("receive_msg", msg)
                     print(msg)
+                    if not msg.__eq__(self.message_ack):
+                        self.client.send_message(self.message_ack)
                 else:
                     msg = msg.decode(FORMAT)
                     self.guest_pub_key=msg
