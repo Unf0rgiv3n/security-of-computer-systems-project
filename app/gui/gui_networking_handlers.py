@@ -7,13 +7,14 @@ class NetworkingHandler:
     _gui_client = None
 
     @classmethod
-    def handle_set_port(self, input_box, text_box):
+    def handle_set_port(self, input_box, text_box,combobox):
         port = input_box.get()
+        encryption_method = combobox.get()
         self._gui_server = server.Server()
         if self._gui_client is None:
             self._gui_client = client.Client()
         #gui_server.server_events.subscribe("receive_msg", handle_receive_msg)
-        thread = threading.Thread(target=self._gui_server.start_server, args=(port,self._gui_client), daemon=True)
+        thread = threading.Thread(target=self._gui_server.start_server, args=(port,self._gui_client,encryption_method), daemon=True)
         thread.start()
 
     @classmethod
