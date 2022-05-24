@@ -1,8 +1,12 @@
 from ast import Bytes
 from distutils.command.install import SCHEME_KEYS
+from math import fabs
 import random
 import socket
 import threading
+from xxlimited import Str
+
+from blinker import receiver_connected
 from .networking_consts import *
 from ..event import Event
 from ..encryption import key_gens
@@ -28,25 +32,42 @@ class Server:
         self.client = None
         self.encryption_method = None
     
+    def receive_string_message(self,conn,decrypt = True,msg_ack = True) -> str:
+        msg_length = conn.recv(HEADER).decode(FORMAT)
+        if msg_length:
+            msg_length = int(msg_length)
+            msg = conn.recv(msg_length)
+            if self.encryption_obj is not None and decrypt:
+                msg = self.encryption_obj.decrypt_with_AES(msg).decode(FORMAT)
+                if not msg.__eq__(self.message_ack) and msg_ack:
+                    self.client.send(self.message_ack,self.client.STRING_MSG)
+                return msg
+            else:
+                msg = msg.decode(FORMAT)
+                return msg
+        else:
+            return None
+
+    def receive_bytes_message(self,conn) -> bytes:
+        msg_length = conn.recv(HEADER).decode(FORMAT)
+        if msg_length:
+            msg_length = int(msg_length)
+            msg = conn.recv(msg_length)
+            return msg
+
     def handle_client(self, conn, addr):
         print(f"[INFO] Client {addr} connected")
         while self.listening:
-            msg_length = conn.recv(HEADER).decode(FORMAT)
-            if msg_length:
-                msg_length = int(msg_length)
-                msg = conn.recv(msg_length)
-                if self.encryption_obj is not None:
-                    msg = self.encryption_obj.decrypt_with_AES(msg).decode(FORMAT)
-                    self.server_events.post_event("receive_msg", msg)
-                    print(msg)
-                    if not msg.__eq__(self.message_ack):
-                        self.client.send_message(self.message_ack)
-                else:
-                    msg = msg.decode(FORMAT)
-                    self.guest_pub_key=msg
-                    self.negotiate_mode_and_key(conn,addr)
+                type_of_message = self.receive_string_message(conn,True,False)
+                if type_of_message.__eq__("string"):
+                    message = self.receive_string_message(conn)
+                    if self.encryption_obj is None:   #its public key
+                        self.guest_pub_key=message
+                        self.negotiate_mode_and_key(conn) 
+                    elif message is not None:
+                        print(message)
 
-    def negotiate_mode_and_key(self,conn,addr):
+    def negotiate_mode_and_key(self,conn):
         self.encryption_obj = Encryption()
         if key_gens.should_generate_session_key(self.guest_pub_key):
             while not self.client.is_connected():
@@ -60,39 +81,35 @@ class Server:
 
     def send_and_set_session_key(self):
         self.encryption_obj.set_RSA_cipher(self.guest_pub_key)
-        self.client.send_message_bytes(self.encryption_obj.encrypt_with_RSA(key_gens.get_AES()))
+        encrypted_session_key = self.encryption_obj.encrypt_with_RSA(key_gens.get_AES())
+        self.client.send(encrypted_session_key,self.client.BYTES_MSG)
         self.session_key = key_gens.get_AES()
-        ##self.client.set_encryption(self.encryption_obj)
         print(f"[INFO] Session key agreed {self.session_key}")
 
     def send_and_set_encryption_properties(self):
-        self.client.send_message(self.encryption_method)
+        self.client.send(self.encryption_method,self.client.STRING_MSG)
         if (self.encryption_method.__eq__("CBC")):
             self.encryption_method = self.encryption_obj.MODE_CBC
             self.encryption_obj.set_AES_cipher(self.session_key,self.encryption_method,os.urandom(16))
-            self.client.send_message_bytes(self.encryption_obj.get_AES_IV())
+            self.client.send(self.encryption_obj.get_AES_IV(),self.client.BYTES_MSG)
         else:
             self.encryption_method = self.encryption_obj.MODE_ECB
             self.encryption_obj.set_AES_cipher(self.session_key,self.encryption_method)
 
     def receive_session_key(self,conn):
         self.encryption_obj.set_RSA_cipher(key_gens.get_private_key())
-        msg_length = conn.recv(HEADER).decode(FORMAT)
-        msg_length = int(msg_length)
-        encrypted_session_key = conn.recv(msg_length)
+        type_of_message = self.receive_string_message(conn, False)
+        encrypted_session_key = self.receive_bytes_message(conn)
         self.session_key=self.encryption_obj.decrypt_with_RSA(encrypted_session_key)
         print(f"[INFO] Session key agreed {self.session_key}")
 
     def receive_encryption_properties(self,conn):
-        msg_length = conn.recv(HEADER).decode(FORMAT)
-        msg_length = int(msg_length)
-        msg = conn.recv(msg_length)
-        self.encryption_method = msg.decode(FORMAT)
+        type_of_message = self.receive_string_message(conn, False)
+        self.encryption_method = self.receive_string_message(conn, False)
         if (self.encryption_method.__eq__("CBC")):
             self.encryption_method = self.encryption_obj.MODE_CBC
-            msg_length = conn.recv(HEADER).decode(FORMAT)
-            msg_length = int(msg_length)
-            IV_vector = conn.recv(msg_length)
+            type_of_message = self.receive_string_message(conn, False)
+            IV_vector = self.receive_bytes_message(conn)
             self.encryption_obj.set_AES_cipher(self.session_key,self.encryption_method,IV_vector)
         else:
             self.encryption_method = self.encryption_obj.MODE_ECB
@@ -105,9 +122,11 @@ class Server:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((SERVER, self.port))
         self.socket.listen()
+        
         self.client = client
         print(f"[INFO] Server is listening on port {self.port}")
         self.listening = True
+
         while self.listening:
             try:
                 conn, addr = self.socket.accept()

@@ -12,6 +12,10 @@ class Client:
     client_events = Event()
     encryption_obj : Encryption
 
+    STRING_MSG = 1
+    BYTES_MSG = 2
+    FILE_MSG = 3
+
     def __init__(self) -> None:
         self.socket = None
         self.port = None
@@ -30,6 +34,14 @@ class Client:
         #self.client_events.post_event("send_msg", message)
         self.socket.send(message)
 
+    def send(self, msg, type_of_msg):
+        if type_of_msg == self.STRING_MSG:
+            self.send_message("string") #sending header
+            self.send_message(msg) # sending message
+        if type_of_msg == self.BYTES_MSG:
+            self.send_message("bytes")
+            self.send_message_bytes(msg)
+
     def send_message_bytes(self, msg: Bytes):
         message = msg
         msg_length = len(message)
@@ -47,7 +59,8 @@ class Client:
         print(f"[INFO] Client connected to {SERVER}:{self.port}")
         self.socket = client
         self.connected = True
-        self.send_message(key_gens.get_public_key())
+        self.send(key_gens.get_public_key(),self.STRING_MSG)
+
         
     def stop_client(self):
         print(f"[INFO] Shutting down client connected to: {self.port}")

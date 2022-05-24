@@ -45,7 +45,14 @@ class NetworkingHandler:
     def handle_send_message(self, text_box_msg):
         if self._gui_client:
             msg = text_box_msg.get()
-            self._gui_client.send_message(msg)
+            self._gui_client.send(msg,self._gui_client.STRING_MSG)
+        else: 
+            print("[WARNING] Client not connected")
+
+    @classmethod
+    def handle_send_file(self,filename):
+        if self._gui_client:
+            print("GIT")
         else: 
             print("[WARNING] Client not connected")
 

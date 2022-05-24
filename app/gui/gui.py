@@ -95,6 +95,7 @@ class Gui(tk.Tk):
             title='Selected File',
             message=filename
         )
+        NetworkingHandler.handle_send_file(filename)
 
     def _handler_focus_out(self, _):
         self.focus()
