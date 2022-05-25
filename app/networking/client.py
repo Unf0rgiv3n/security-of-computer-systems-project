@@ -41,8 +41,15 @@ class Client:
         with open(filepath, "rb") as file:
             while readed < size:
                 data_chunk = file.read(read_size)
+                encrypted = self.encryption_obj.encrypt_with_AES(data_chunk)
                 readed = readed + read_size
-                self.socket.send(data_chunk)
+
+                msg_length = len(encrypted)
+                send_length = str(msg_length).encode(FORMAT)
+                send_length  += b' ' * (HEADER - len(send_length))
+
+                self.socket.send(send_length)
+                self.socket.send(encrypted)
 
     def send(self, msg, type_of_msg):
         if type_of_msg == self.STRING_MSG:

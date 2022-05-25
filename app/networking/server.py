@@ -62,7 +62,11 @@ class Server:
         name_of_file = self.receive_string_message(conn)
         with open(name_of_file, "wb") as file:
             while readed < size_of_file:
-                chunk = conn.recv(chunk_size)
+                msg_length = conn.recv(HEADER).decode(FORMAT)
+                msg_length_encrypted = int(msg_length)
+                chunk_encrypted = conn.recv(msg_length_encrypted)
+                ## encrypted size != data size
+                chunk = self.encryption_obj.decrypt_with_AES(chunk_encrypted)
                 file.write(chunk)
                 readed = readed + chunk_size
 
