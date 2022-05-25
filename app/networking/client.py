@@ -6,6 +6,7 @@ from ..event import Event
 from ..encryption import key_gens
 from ..encryption.encryption import Encryption
 from app import encryption
+import os
 
 class Client:
     
@@ -34,6 +35,15 @@ class Client:
         #self.client_events.post_event("send_msg", message)
         self.socket.send(message)
 
+    def send_file(self,filepath: str, size):
+        read_size = 1024
+        readed = 0
+        with open(filepath, "rb") as file:
+            while readed < size:
+                data_chunk = file.read(read_size)
+                readed = readed + read_size
+                self.socket.send(data_chunk)
+
     def send(self, msg, type_of_msg):
         if type_of_msg == self.STRING_MSG:
             self.send_message("string") #sending header
@@ -41,6 +51,14 @@ class Client:
         if type_of_msg == self.BYTES_MSG:
             self.send_message("bytes")
             self.send_message_bytes(msg)
+        if type_of_msg == self.FILE_MSG:
+            file_size = os.path.getsize(msg)
+            file_name = os.path.basename(msg)
+            self.send_message("file")
+            self.send_message(str(file_size))
+            self.send_message(file_name)
+            self.send_file(msg,file_size)
+            
 
     def send_message_bytes(self, msg: Bytes):
         message = msg

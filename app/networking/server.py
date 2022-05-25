@@ -39,7 +39,7 @@ class Server:
             msg = conn.recv(msg_length)
             if self.encryption_obj is not None and decrypt:
                 msg = self.encryption_obj.decrypt_with_AES(msg).decode(FORMAT)
-                if not msg.__eq__(self.message_ack) and msg_ack:
+                if not msg == self.message_ack and msg_ack:
                     self.client.send(self.message_ack,self.client.STRING_MSG)
                 return msg
             else:
@@ -55,17 +55,30 @@ class Server:
             msg = conn.recv(msg_length)
             return msg
 
+    def receive_file(self,conn):
+        chunk_size = 1024
+        readed = 0
+        size_of_file = int(self.receive_string_message(conn))
+        name_of_file = self.receive_string_message(conn)
+        with open(name_of_file, "wb") as file:
+            while readed < size_of_file:
+                chunk = conn.recv(chunk_size)
+                file.write(chunk)
+                readed = readed + chunk_size
+
     def handle_client(self, conn, addr):
         print(f"[INFO] Client {addr} connected")
         while self.listening:
-                type_of_message = self.receive_string_message(conn,True,False)
-                if type_of_message.__eq__("string"):
-                    message = self.receive_string_message(conn)
-                    if self.encryption_obj is None:   #its public key
-                        self.guest_pub_key=message
-                        self.negotiate_mode_and_key(conn) 
-                    elif message is not None:
-                        print(message)
+            type_of_message = self.receive_string_message(conn,True,False)
+            if type_of_message == "string":
+                message = self.receive_string_message(conn)
+                if self.encryption_obj is None:   #its public key
+                    self.guest_pub_key=message
+                    self.negotiate_mode_and_key(conn) 
+                elif message is not None:
+                    print(message)
+            if type_of_message == "file":
+                self.receive_file(conn)
 
     def negotiate_mode_and_key(self,conn):
         self.encryption_obj = Encryption()
@@ -88,7 +101,7 @@ class Server:
 
     def send_and_set_encryption_properties(self):
         self.client.send(self.encryption_method,self.client.STRING_MSG)
-        if (self.encryption_method.__eq__("CBC")):
+        if (self.encryption_method == "CBC"):
             self.encryption_method = self.encryption_obj.MODE_CBC
             self.encryption_obj.set_AES_cipher(self.session_key,self.encryption_method,os.urandom(16))
             self.client.send(self.encryption_obj.get_AES_IV(),self.client.BYTES_MSG)
@@ -106,7 +119,7 @@ class Server:
     def receive_encryption_properties(self,conn):
         type_of_message = self.receive_string_message(conn, False)
         self.encryption_method = self.receive_string_message(conn, False)
-        if (self.encryption_method.__eq__("CBC")):
+        if (self.encryption_method == "CBC"):
             self.encryption_method = self.encryption_obj.MODE_CBC
             type_of_message = self.receive_string_message(conn, False)
             IV_vector = self.receive_bytes_message(conn)

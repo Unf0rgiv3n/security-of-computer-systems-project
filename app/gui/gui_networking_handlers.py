@@ -52,7 +52,7 @@ class NetworkingHandler:
     @classmethod
     def handle_send_file(self,filename):
         if self._gui_client:
-            print("GIT")
+            self._gui_client.send(filename,self._gui_client.FILE_MSG)
         else: 
             print("[WARNING] Client not connected")
 
