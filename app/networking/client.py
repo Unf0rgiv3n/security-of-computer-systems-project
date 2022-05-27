@@ -48,6 +48,7 @@ class Client:
                 data_chunk = file.read(read_size)
                 encrypted = self.encryption_obj.encrypt_with_AES(data_chunk)
                 readed = readed + read_size
+
                 msg_length = len(encrypted)
                 send_length = str(msg_length).encode(FORMAT)
                 send_length  += b' ' * (HEADER - len(send_length))
@@ -59,8 +60,6 @@ class Client:
                     progress_bar['value'] += 1
                     progress_bar.master.update_idletasks()
                     actual_border += size_divided
-                
-
 
     def send(self, msg, type_of_msg, progress_bar = None):
         if type_of_msg == self.STRING_MSG:
