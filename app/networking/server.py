@@ -62,9 +62,19 @@ class Server:
         name_of_file = self.receive_string_message(conn)
         with open(name_of_file, "wb") as file:
             while readed < size_of_file:
-                chunk = conn.recv(chunk_size)
-                file.write(chunk)
-                readed = readed + chunk_size
+                msg_length = conn.recv(HEADER)
+                while len(msg_length) < HEADER:
+                    msg_length += conn.recv(HEADER - len(msg_length))
+                msg_length = msg_length.decode(FORMAT)
+                if msg_length:
+                    msg_length_encrypted = int(msg_length)
+                    chunk_encrypted = conn.recv(msg_length_encrypted)
+                    while len(chunk_encrypted) < msg_length_encrypted:
+                        chunk_encrypted += conn.recv(msg_length_encrypted - len(chunk_encrypted))
+                    ## encrypted size != data size
+                    chunk = self.encryption_obj.decrypt_with_AES(chunk_encrypted)
+                    file.write(chunk)
+                    readed = readed + chunk_size
 
     def handle_client(self, conn, addr):
         print(f"[INFO] Client {addr} connected")

@@ -1,6 +1,9 @@
 from ast import Bytes
 import socket
 from xmlrpc.client import boolean
+from tkinter import ttk
+
+from click import progressbar
 from .networking_consts import *
 from ..event import Event
 from ..encryption import key_gens
@@ -35,16 +38,31 @@ class Client:
         #self.client_events.post_event("send_msg", message)
         self.socket.send(message)
 
-    def send_file(self,filepath: str, size):
+    def send_file(self,filepath: str, size, progress_bar: ttk.Progressbar):
         read_size = 1024
         readed = 0
+        size_divided = size / 1000
+        actual_border = size_divided
         with open(filepath, "rb") as file:
             while readed < size:
                 data_chunk = file.read(read_size)
+                encrypted = self.encryption_obj.encrypt_with_AES(data_chunk)
                 readed = readed + read_size
-                self.socket.send(data_chunk)
+                msg_length = len(encrypted)
+                send_length = str(msg_length).encode(FORMAT)
+                send_length  += b' ' * (HEADER - len(send_length))
 
-    def send(self, msg, type_of_msg):
+                self.socket.send(send_length)
+                self.socket.send(encrypted)
+
+                if readed > actual_border:
+                    progress_bar['value'] += 1
+                    progress_bar.master.update_idletasks()
+                    actual_border += size_divided
+                
+
+
+    def send(self, msg, type_of_msg, progress_bar = None):
         if type_of_msg == self.STRING_MSG:
             self.send_message("string") #sending header
             self.send_message(msg) # sending message
@@ -57,7 +75,7 @@ class Client:
             self.send_message("file")
             self.send_message(str(file_size))
             self.send_message(file_name)
-            self.send_file(msg,file_size)
+            self.send_file(msg,file_size, progress_bar)
             
 
     def send_message_bytes(self, msg: Bytes):

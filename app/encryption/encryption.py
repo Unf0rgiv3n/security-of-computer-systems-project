@@ -4,6 +4,8 @@ from Crypto.Util.Padding import pad, unpad
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Cipher import AES, PKCS1_OAEP
 
+from app.networking.networking_consts import FORMAT
+
 
 class Encryption:
 
@@ -31,13 +33,13 @@ class Encryption:
     def encrypt_with_AES(self,msg) -> bytes:
         if self.method == self.MODE_CBC:
             self.AES_cipher = AES.new(self.key, self.method, self.IV)
-        data = self.AES_cipher.encrypt(pad(msg,self.AES_cipher.block_size))
+        data = self.AES_cipher.encrypt(pad(msg,16))
         return data
 
     def decrypt_with_AES(self,msg) -> bytes:
         if self.method == self.MODE_CBC:
             self.AES_cipher = AES.new(self.key, self.method, self.IV)
-        data = unpad(self.AES_cipher.decrypt(msg),self.AES_cipher.block_size)
+        data = unpad(self.AES_cipher.decrypt(msg),16)
         return data
 
     def encrypt_with_RSA(self,msg) -> bytes:

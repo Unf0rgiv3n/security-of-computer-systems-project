@@ -1,3 +1,4 @@
+import time
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
@@ -6,6 +7,7 @@ from turtle import bgcolor
 from typing import Callable
 from functools import partial
 import os
+from typing_extensions import Self
 
 from .gui_networking_handlers import NetworkingHandler
 
@@ -19,7 +21,7 @@ class Gui(tk.Tk):
         self.style= ttk.Style()
         self.style.theme_use('clam')
 
-        self._create_grid(row_num=5, col_num=2)
+        self._create_grid(row_num=6, col_num=2)
 
         self._select_file_btn = self._create_button(row=1,column=1, columnspan=2, 
                                                     text='Select file', command=self._select_file)
@@ -30,7 +32,7 @@ class Gui(tk.Tk):
         self._sending_port_entry_box = self._create_entry_box(row=3, column=1)
         self._send_text_box_btn = self._create_button(row=5,column=0, text='Send text', 
             command=partial(NetworkingHandler.handle_send_message, self._msg_send_entry_box))
-
+        self._progress_bar = self._create_progress_bar(row=6,column=0,rowspan=1,columnspan=2)
         self._combobox = self._create_combobox(row=0,column=1, rowspan=1, columnspan=2)
         self._listener_port_entry_box = self._create_entry_box(row=2, column=1, rowspan=1, columnspan=1)
         self._listen_to_port_btn = self._create_button(row=2, column=2, text='Listen on port', 
@@ -42,6 +44,12 @@ class Gui(tk.Tk):
                                                         command=NetworkingHandler.handle_stop_client)
         self._drop_listening_btn = self._create_button(row=4,column=2, rowspan=2, text='Drop listening on port',
                                                        command=NetworkingHandler.handle_stop_server)
+
+    def _create_progress_bar(self,row, column, rowspan, columnspan):
+        progress_bar = ttk.Progressbar(self,length=1000)
+        progress_bar.grid(row=row,column=column, rowspan=rowspan, columnspan=columnspan, sticky='nsew')
+        progress_bar['value'] = 0
+        return progress_bar
 
     def _create_grid(self, row_num: int, col_num: int):
         for i in range(row_num):
@@ -78,6 +86,7 @@ class Gui(tk.Tk):
         return combobox
 
     def _select_file(self):
+        self._progress_bar['value'] = 0
         filetypes = (
             ('text files', '*.txt'),
             ('All files', '*.*')
@@ -95,7 +104,7 @@ class Gui(tk.Tk):
             title='Selected File',
             message=filename
         )
-        NetworkingHandler.handle_send_file(filename)
+        NetworkingHandler.handle_send_file(filename,self._progress_bar)
 
     def _handler_focus_out(self, _):
         self.focus()

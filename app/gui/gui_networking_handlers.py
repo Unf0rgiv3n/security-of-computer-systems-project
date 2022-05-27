@@ -1,3 +1,4 @@
+from click import progressbar
 from ..networking import client, server
 import threading
 
@@ -50,9 +51,9 @@ class NetworkingHandler:
             print("[WARNING] Client not connected")
 
     @classmethod
-    def handle_send_file(self,filename):
+    def handle_send_file(self,filename,progress_bar):
         if self._gui_client:
-            self._gui_client.send(filename,self._gui_client.FILE_MSG)
+            self._gui_client.send(filename,self._gui_client.FILE_MSG,progress_bar)
         else: 
             print("[WARNING] Client not connected")
 
