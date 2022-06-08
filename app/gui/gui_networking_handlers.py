@@ -1,3 +1,4 @@
+from cgitb import text
 from click import progressbar
 from ..networking import client, server
 import threading
@@ -15,15 +16,15 @@ class NetworkingHandler:
         if self._gui_client is None:
             self._gui_client = client.Client()
         #gui_server.server_events.subscribe("receive_msg", handle_receive_msg)
-        thread = threading.Thread(target=self._gui_server.start_server, args=(port,self._gui_client,encryption_method), daemon=True)
+        thread = threading.Thread(target=self._gui_server.start_server, args=(port,self._gui_client,encryption_method,text_box), daemon=True)
         thread.start()
 
     @classmethod
-    def handle_connect_to_port(self, input_box):
+    def handle_connect_to_port(self, input_box,text_box):
         port = input_box.get()
         if self._gui_client is None:
             self._gui_client = client.Client()
-        thread = threading.Thread(target=self._gui_client.start_client, args=(port,), daemon=True)
+        thread = threading.Thread(target=self._gui_client.start_client, args=(port,text_box), daemon=True)
         thread.start()
 
     @classmethod

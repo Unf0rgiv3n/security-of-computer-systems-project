@@ -4,7 +4,10 @@ from math import fabs
 import random
 import socket
 import threading
+from typing import Text
 from xxlimited import Str
+import tkinter as tk
+
 
 from blinker import receiver_connected
 from .networking_consts import *
@@ -40,7 +43,7 @@ class Server:
             if self.encryption_obj is not None and decrypt:
                 msg = self.encryption_obj.decrypt_with_AES(msg).decode(FORMAT)
                 if not msg == self.message_ack and msg_ack:
-                    self.client.send(self.message_ack,self.client.STRING_MSG)
+                    self.client.send(self.message_ack,self.client.STRING_MSG,console_write=False)
                 return msg
             else:
                 msg = msg.decode(FORMAT)
@@ -87,6 +90,10 @@ class Server:
                     self.negotiate_mode_and_key(conn) 
                 elif message is not None:
                     print(message)
+                    if (message == "Message Delivered"):
+                        self.text_box.insert(tk.END,"[INFO]: " + message + '\n')
+                    else:
+                        self.text_box.insert(tk.END,"guest: " + message + '\n')
             if type_of_message == "file":
                 self.receive_file(conn)
 
@@ -110,7 +117,7 @@ class Server:
         print(f"[INFO] Session key agreed {self.session_key}")
 
     def send_and_set_encryption_properties(self):
-        self.client.send(self.encryption_method,self.client.STRING_MSG)
+        self.client.send(self.encryption_method,self.client.STRING_MSG,console_write=False)
         if (self.encryption_method == "CBC"):
             self.encryption_method = self.encryption_obj.MODE_CBC
             self.encryption_obj.set_AES_cipher(self.session_key,self.encryption_method,os.urandom(16))
@@ -138,13 +145,14 @@ class Server:
             self.encryption_method = self.encryption_obj.MODE_ECB
             self.encryption_obj.set_AES_cipher(self.session_key,self.encryption_method)
 
-    def start_server(self, port: str, client: Client, encryption_method: str):
+    def start_server(self, port: str, client: Client, encryption_method: str, text_box: tk.Text):
         print("[INFO] Starting server")
         self.port = int(port)
         self.encryption_method = encryption_method
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((SERVER, self.port))
         self.socket.listen()
+        self.text_box = text_box
         
         self.client = client
         print(f"[INFO] Server is listening on port {self.port}")

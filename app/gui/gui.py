@@ -1,6 +1,6 @@
 import time
 import tkinter as tk
-from tkinter import ttk
+from tkinter import BOTH, END, INSERT, ttk
 from tkinter import filedialog as fd
 from tkinter.messagebox import showinfo
 from turtle import bgcolor
@@ -38,7 +38,7 @@ class Gui(tk.Tk):
         self._listen_to_port_btn = self._create_button(row=2, column=2, text='Listen on port', 
             command=partial(NetworkingHandler.handle_set_port, self._listener_port_entry_box, self._msg_received_text_box,self._combobox))
         self._connect_to_port_btn = self._create_button(row=3, column=2, text='Connect to port',
-            command=partial(NetworkingHandler.handle_connect_to_port, self._sending_port_entry_box))
+            command=partial(NetworkingHandler.handle_connect_to_port, self._sending_port_entry_box,self._msg_received_text_box))
 
         self._drop_connection_btn = self._create_button(row=4,column=1, rowspan=2, text='Drop connection with server', 
                                                         command=NetworkingHandler.handle_stop_client)

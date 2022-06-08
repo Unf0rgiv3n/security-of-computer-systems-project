@@ -1,7 +1,8 @@
 from ast import Bytes
 import socket
+import tkinter as tk
 from xmlrpc.client import boolean
-from tkinter import ttk
+from tkinter import END, ttk
 
 from click import progressbar
 from .networking_consts import *
@@ -61,10 +62,13 @@ class Client:
                     progress_bar.master.update_idletasks()
                     actual_border += size_divided
 
-    def send(self, msg, type_of_msg, progress_bar = None):
+    def send(self, msg, type_of_msg, progress_bar = None,console_write = True):
         if type_of_msg == self.STRING_MSG:
             self.send_message("string") #sending header
             self.send_message(msg) # sending message
+            if (console_write):
+                self.text_box.insert(END,"me: "+msg +"\n")
+
         if type_of_msg == self.BYTES_MSG:
             self.send_message("bytes")
             self.send_message_bytes(msg)
@@ -86,15 +90,16 @@ class Client:
         #self.client_events.post_event("send_msg", message)
         self.socket.send(message)
 
-    def start_client(self, port: str):
+    def start_client(self, port: str, text_box: tk.Text):
         print("[INFO] Starting client")
         self.port = int(port)
+        self.text_box = text_box
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect((SERVER, self.port))
         print(f"[INFO] Client connected to {SERVER}:{self.port}")
         self.socket = client
         self.connected = True
-        self.send(key_gens.get_public_key(),self.STRING_MSG)
+        self.send(key_gens.get_public_key(),self.STRING_MSG,console_write=False)
 
         
     def stop_client(self):
