@@ -11,6 +11,7 @@ from ..encryption import key_gens
 from ..encryption.encryption import Encryption
 from app import encryption
 import os
+import time
 
 class Client:
     
@@ -42,7 +43,7 @@ class Client:
     def send_file(self,filepath: str, size, progress_bar: ttk.Progressbar):
         read_size = 1024
         readed = 0
-        size_divided = size / 1000
+        size_divided = size / 100
         actual_border = size_divided
         with open(filepath, "rb") as file:
             while readed < size:
@@ -61,6 +62,7 @@ class Client:
                     progress_bar['value'] += 1
                     progress_bar.master.update_idletasks()
                     actual_border += size_divided
+
 
     def send(self, msg, type_of_msg, progress_bar = None,console_write = True):
         if type_of_msg == self.STRING_MSG:
