@@ -7,6 +7,7 @@ import threading
 from typing import Text
 from xxlimited import Str
 import tkinter as tk
+import time
 
 
 from blinker import receiver_connected
@@ -127,7 +128,7 @@ class Server:
             self.encryption_obj.set_AES_cipher(self.session_key,self.encryption_method)
 
     def receive_session_key(self,conn):
-        self.encryption_obj.set_RSA_cipher(key_gens.get_private_key())
+        self.encryption_obj.set_RSA_cipher(key_gens.get_private_key("kluczyk"))
         type_of_message = self.receive_string_message(conn, False)
         encrypted_session_key = self.receive_bytes_message(conn)
         self.session_key=self.encryption_obj.decrypt_with_RSA(encrypted_session_key)
